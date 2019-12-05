@@ -2,24 +2,15 @@ const request = require('request');
 
 const baseUrl = "https://api.thecatapi.com/v1";
 
-const fetchBreed = function(breed) {
+module.exports.fetchBreedDescription = function(breed, callback) {
   request(`${baseUrl}/breeds/search?q=${encodeURI(breed)}`, (err, response, body) => {
-    handleResponse({err, response, body});
+    if (!err && response.statusCode >= 300) {
+      err = new Error("Got status code: " + response.statusCode);
+    }
+
+    const cat = JSON.parse(body)[0];
+    if (!cat) err = new Error("No results were found");
+    if (err) callback(err, null);
+    else callback(null, cat.description);
   });
 };
-
-const handleResponse = function({err, response, body}) {
-  if (err || response.statusCode >= 300) {
-    console.log("Something went wrong :(");
-    if (err) throw err;
-  }
-  const catInfo = JSON.parse(body)[0];
-  if (catInfo) {
-    console.log(catInfo.description);
-  } else {
-    console.log("Your request didn't match anything");
-  }
-};
-
-const query = process.argv.slice(2).join(" ");
-fetchBreed(query);
